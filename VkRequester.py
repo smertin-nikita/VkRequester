@@ -1,5 +1,17 @@
+import os
+import os.path as op
+
 import requests
 from pprint import pprint
+
+
+def get_token(path):
+    try:
+        with open(path, 'r') as f:
+            token = f.readline()
+    except FileNotFoundError:
+        print("File not found")
+    return token
 
 
 class VkUser:
@@ -15,13 +27,16 @@ class VkUser:
             'v': self.version
         }
 
-        info = requests.get(
+        response = requests.get(
             url=self.url+'users.get',
             params={
                 **self.params,
                 'fields': 'screen_name'
             }
-        ).json()
+        )
+        response.raise_for_status()
+        info = response.json()
+        print(info)
         self.id = info['response'][0]['id']
         self.screen_name = info['response'][0]['screen_name']
 
@@ -44,6 +59,7 @@ class VkUser:
 
 
 if __name__ == '__main__':
-    vk_user = VkUser('10b2e6b1a90a01875cfaa0d2dd307b7a73a15ceb1acf0c0f2a9e9c586f3b597815652e5c28ed8a1baf13c', '5.126')
-    friends = vk_user.get_mutual('40187990', '72775614')
+    token_path = op.join(os.getcwd(), 'token')
+    vk_user = VkUser(token_path, '5.126')
+    friends = vk_user.get_mutual('40187990')
     print(friends)
