@@ -1,5 +1,6 @@
 import os
 import os.path as op
+from itertools import chain
 
 import requests
 from pprint import pprint
@@ -46,22 +47,33 @@ class VkUser:
         uid = self.screen_name or 'id' + self.id
         return f'https://vk.com/{uid}'
 
-    def __and__(self, user):
-        if not isinstance(user, VkUser):
-            raise TypeError
-        else:
-            friends_url = self.url + 'friends.getMutual'
-            friends_params = {
-                'source_uid': self.id,
-                'target_uid': user.id
-            }
+    def __and__(self, *users):
 
-            response = requests.get(
-                url=friends_url,
-                params={**self.params, **friends_params}
-            )
-            response.raise_for_status()
-            return response.json()['response']
+        target_uids = []
+
+        for user in users:
+            if not isinstance(user, VkUser):
+                raise TypeError
+            else:
+                target_uids.append(user.id)
+
+        friends_url = self.url + 'friends.getMutual'
+        friends_params = {
+            'source_uid': self.id,
+            'target_uids': target_uids
+        }
+
+        response = requests.get(
+            url=friends_url,
+            params={**self.params, **friends_params}
+        )
+        response.raise_for_status()
+
+        info = response.json()['response']
+        pprint(info)
+        common_friends_ids = [user['common_friends'] for user in info]
+
+        return common_friends_ids
 
     TOKEN_PATH = 'keys/token'
 
@@ -82,7 +94,7 @@ if __name__ == '__main__':
     print(another_user)
     another_user1 = VkUser(uid='94643739')
     print(another_user1)
-    friends = my_profile & another_user
+    friends = another_user1 & my_profile, another_user
     print(friends)
 
 
