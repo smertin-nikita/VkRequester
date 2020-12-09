@@ -3,6 +3,7 @@ import os.path as op
 
 import requests
 from pprint import pprint
+from time import sleep
 
 
 class VkUser:
@@ -12,6 +13,7 @@ class VkUser:
 
     # todo:  Если токен отсутвует в конфиг файле или истек - сделать запрос на получения токена
     def __init__(self, version='5.126', uid=None):
+        sleep(1)
         self.__token = self.__get_token()
         self.version = version
         self.params = {
@@ -44,19 +46,22 @@ class VkUser:
         uid = self.screen_name or 'id' + self.id
         return f'https://vk.com/{uid}'
 
-    def __and__(self, target_uid):
-        friends_url = self.url + 'friends.getMutual'
-        friends_params = {
-            'source_uid': self.id,
-            'target_uid': target_uid
-        }
+    def __and__(self, user):
+        if not isinstance(user, VkUser):
+            raise TypeError
+        else:
+            friends_url = self.url + 'friends.getMutual'
+            friends_params = {
+                'source_uid': self.id,
+                'target_uid': user.id
+            }
 
-        response = requests.get(
-            url=friends_url,
-            params={**self.params, **friends_params}
-        )
-        response.raise_for_status()
-        return response.json()
+            response = requests.get(
+                url=friends_url,
+                params={**self.params, **friends_params}
+            )
+            response.raise_for_status()
+            return response.json()['response']
 
     TOKEN_PATH = 'keys/token'
 
@@ -75,7 +80,9 @@ if __name__ == '__main__':
     print(my_profile)
     another_user = VkUser(uid='40187990')
     print(another_user)
-    # friends = my_profile.get_mutual('40187990')
-    # print(friends)
+    another_user1 = VkUser(uid='94643739')
+    print(another_user1)
+    friends = my_profile & another_user
+    print(friends)
 
 
