@@ -34,10 +34,10 @@ class VkUser:
                 'fields': fields
             }
         )
-        # todo: Почему-то не отлвливает ошибки VkApi
+        # todo: Почему-то на некоторые ошибки VkApi приходит
+        #  ответ с статус кодом 200
         response.raise_for_status()
 
-        print(response.json())
         info = response.json()['response'][0]
 
         self.id = info['id']
@@ -47,33 +47,29 @@ class VkUser:
         uid = self.screen_name or 'id' + self.id
         return f'https://vk.com/{uid}'
 
-    def __and__(self, *users):
+    # todo было бы неплохо сделать поулчение общих друзей
+    #  для нескольких пользователей как (user1 & user2 & ... & usern)
+    def __and__(self, user):
 
-        target_uids = []
+        if not isinstance(user, VkUser):
+            raise TypeError
+        else:
+            friends_url = self.url + 'friends.getMutual'
+            friends_params = {
+                'source_uid': self.id,
+                'target_uid': user.id
+            }
 
-        for user in users:
-            if not isinstance(user, VkUser):
-                raise TypeError
-            else:
-                target_uids.append(user.id)
+            response = requests.get(
+                url=friends_url,
+                params={**self.params, **friends_params}
+            )
+            response.raise_for_status()
 
-        friends_url = self.url + 'friends.getMutual'
-        friends_params = {
-            'source_uid': self.id,
-            'target_uids': target_uids
-        }
+            friends_ids = response.json()['response']
+            friends = [VkUser(uid=id) for id in friends_ids]
 
-        response = requests.get(
-            url=friends_url,
-            params={**self.params, **friends_params}
-        )
-        response.raise_for_status()
-
-        info = response.json()['response']
-        pprint(info)
-        common_friends_ids = [user['common_friends'] for user in info]
-
-        return common_friends_ids
+            return friends
 
     TOKEN_PATH = 'keys/token'
 
@@ -92,9 +88,7 @@ if __name__ == '__main__':
     print(my_profile)
     another_user = VkUser(uid='40187990')
     print(another_user)
-    another_user1 = VkUser(uid='94643739')
-    print(another_user1)
-    friends = another_user1 & my_profile, another_user
-    print(friends)
+    friends = another_user & my_profile
+    print(*friends, sep='\n')
 
 
