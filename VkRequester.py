@@ -1,7 +1,7 @@
 import os
 import os.path as op
 from pprint import pprint
-from config import CONFIG
+from config import CONFIG, get_url_for_token
 
 import requests
 from time import sleep
@@ -11,16 +11,18 @@ class VkUser:
     """Represents entity vk user"""
 
     url = 'https://api.vk.com/method/'
-    TOKEN_PATH = 'config.py'
 
-    # todo:  Если токен отсутвует в конфиг файле или истек - сделать запрос на получения токена
     def __init__(self, uid=None, token=None, version='5.126'):
         sleep(1)
 
         if token:
             CONFIG['token'] = token
 
+        if not CONFIG['token']:
+            raise Exception(get_url_for_token())
+
         self.__token = CONFIG['token']
+
         self.version = version
         self.params = {
             'access_token': self.__token,
@@ -40,17 +42,14 @@ class VkUser:
                 'fields': fields
             }
         )
-        # todo: Почему-то на некоторые ошибки VkApi приходит
-        #  ответ с статус кодом 200
+
         response.raise_for_status()
 
         info: dict = response.json()
 
         if 'error' in info.keys():
             raise Exception(info['error'])
-                
 
-        pprint(response.json())
         info = response.json()['response'][0]
 
         self.id = info['id']
@@ -79,23 +78,27 @@ class VkUser:
             )
             response.raise_for_status()
 
+            info: dict = response.json()
+
+            if 'error' in info.keys():
+                raise Exception(info['error'])
+
             friends_ids = response.json()['response']
             friends = [VkUser(uid=id) for id in friends_ids]
 
             return friends
 
-    def __get_token(self):
-        path = op.join(os.getcwd(), self.TOKEN_PATH)
-        try:
-            with open(path, 'r') as f:
-                token = f.readline()
-        except FileNotFoundError:
-            print("File not found")
-        return token
+    # def __get_token(self):
+    #     path = op.join(os.getcwd(), self.TOKEN_PATH)
+    #     try:
+    #         with open(path, 'r') as f:
+    #             token = f.readline()
+    #     except FileNotFoundError:
+    #         print("File not found")
+    #     return token
 
 
 if __name__ == '__main__':
-    VkUser.TOKEN_PATH = 'config.py'
     my_profile = VkUser()
     print(my_profile)
     another_user = VkUser(uid='40187990')
