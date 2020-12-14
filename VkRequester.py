@@ -1,8 +1,7 @@
 import os
 import os.path as op
-from itertools import chain
 from pprint import pprint
-from keys.config import CONFIG
+from config import CONFIG
 
 import requests
 from time import sleep
@@ -12,10 +11,10 @@ class VkUser:
     """Represents entity vk user"""
 
     url = 'https://api.vk.com/method/'
-    TOKEN_PATH = 'keys/config.py'
+    TOKEN_PATH = 'config.py'
 
     # todo:  Если токен отсутвует в конфиг файле или истек - сделать запрос на получения токена
-    def __init__(self, uid=None, token=None ,version='5.126'):
+    def __init__(self, uid=None, token=None, version='5.126'):
         sleep(1)
 
         if token:
@@ -48,8 +47,7 @@ class VkUser:
         info: dict = response.json()
 
         if 'error' in info.keys():
-            error = info['error']
-            if error['error_code'] == 5:
+            raise Exception(info['error'])
                 
 
         pprint(response.json())
@@ -97,7 +95,7 @@ class VkUser:
 
 
 if __name__ == '__main__':
-    VkUser.TOKEN_PATH = 'keys/config.py'
+    VkUser.TOKEN_PATH = 'config.py'
     my_profile = VkUser()
     print(my_profile)
     another_user = VkUser(uid='40187990')
