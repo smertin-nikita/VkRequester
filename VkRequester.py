@@ -1,9 +1,10 @@
 import os
 import os.path as op
 from itertools import chain
+from pprint import pprint
+from keys.config import CONFIG
 
 import requests
-from pprint import pprint
 from time import sleep
 
 
@@ -11,16 +12,22 @@ class VkUser:
     """Represents entity vk user"""
 
     url = 'https://api.vk.com/method/'
+    TOKEN_PATH = 'keys/config.py'
 
     # todo:  Если токен отсутвует в конфиг файле или истек - сделать запрос на получения токена
-    def __init__(self, version='5.126', uid=None):
+    def __init__(self, uid=None, token=None ,version='5.126'):
         sleep(1)
-        self.__token = self.__get_token()
+
+        if token:
+            CONFIG['token'] = token
+
+        self.__token = CONFIG['token']
         self.version = version
         self.params = {
             'access_token': self.__token,
             'v': self.version
         }
+
 
         # todo: Пока жестко закодированы. Либо расшрить поля,
         #  либо добавлять списком или словарем как параметр или иначе...
@@ -38,6 +45,14 @@ class VkUser:
         #  ответ с статус кодом 200
         response.raise_for_status()
 
+        info: dict = response.json()
+
+        if 'error' in info.keys():
+            error = info['error']
+            if error['error_code'] == 5:
+                
+
+        pprint(response.json())
         info = response.json()['response'][0]
 
         self.id = info['id']
@@ -71,8 +86,6 @@ class VkUser:
 
             return friends
 
-    TOKEN_PATH = 'keys/token'
-
     def __get_token(self):
         path = op.join(os.getcwd(), self.TOKEN_PATH)
         try:
@@ -84,6 +97,7 @@ class VkUser:
 
 
 if __name__ == '__main__':
+    VkUser.TOKEN_PATH = 'keys/config.py'
     my_profile = VkUser()
     print(my_profile)
     another_user = VkUser(uid='40187990')
