@@ -135,22 +135,3 @@ class VkUser:
             return most_likes
         else:
             return photos
-
-
-    # def __get_token(self):
-    #     path = op.join(os.getcwd(), self.TOKEN_PATH)
-    #     try:
-    #         with open(path, 'r') as f:
-    #             token = f.readline()
-    #     except FileNotFoundError:
-    #         print("File not found")
-    #     return token
-
-
-if __name__ == '__main__':
-    # print(get_url_for_token())
-    another_user = VkUser('begemot_korovin')
-    print(another_user)
-    pprint(another_user.get_photos(1))
-
-
