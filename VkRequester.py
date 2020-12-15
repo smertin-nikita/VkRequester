@@ -1,10 +1,32 @@
 import os
 import os.path as op
 from pprint import pprint
-from config import CONFIG, get_url_for_token
 
 import requests
 from time import sleep
+
+
+CONFIG = {
+    'app_id': '7697314',
+    'token': '',
+    'v': '5.126',
+    # But it is also an OAuth 2.0 provider and it needs scope.
+    'scope': ['photos']
+}
+
+
+def get_url_for_token():
+    return requests.get(
+        url='https://oauth.vk.com/authorize',
+        params={
+            'client_id': CONFIG['app_id'],
+            'display': 'page',
+            'redirect_uri': 'https://oauth.vk.com/blank.html',
+            'scope': CONFIG['scope'],
+            'response_type': 'token',
+            'v': CONFIG['v']
+        }
+    ).url
 
 
 class VkUser:
@@ -87,7 +109,7 @@ class VkUser:
             return friends
 
     def get_photos(self, likes=None, album_id='profile'):
-        """Returns photos by number of likes"""
+        """Return photos by number of likes"""
 
         params = {
             'owner_id': self.id,
