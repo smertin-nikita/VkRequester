@@ -77,9 +77,7 @@ class VkUser:
                 params={**self.params, **friends_params}
             )
             response.raise_for_status()
-
             info: dict = response.json()
-
             if 'error' in info.keys():
                 raise Exception(info['error'])
 
@@ -87,6 +85,35 @@ class VkUser:
             friends = [VkUser(uid=id) for id in friends_ids]
 
             return friends
+
+    def get_photos(self, likes=None, album_id='profile'):
+        """Returns photos by number of likes"""
+
+        params = {
+            'owner_id': self.id,
+            'album_id': album_id,
+            'extended': 1,
+            'count': 200,
+            'skip_hidden': 1
+        }
+
+        response = requests.get(
+            url=self.url + 'photos.get',
+            params={**self.params, **params}
+
+        )
+        response.raise_for_status()
+        info: dict = response.json()
+        if 'error' in info.keys():
+            raise Exception(info['error'])
+
+        photos = info['response']['items']
+        if likes:
+            most_likes = [photo for photo in photos if photo['likes']['count'] >= likes]
+            return most_likes
+        else:
+            return photos
+
 
     # def __get_token(self):
     #     path = op.join(os.getcwd(), self.TOKEN_PATH)
@@ -99,11 +126,9 @@ class VkUser:
 
 
 if __name__ == '__main__':
-    my_profile = VkUser()
-    print(my_profile)
-    another_user = VkUser(uid='40187990')
+    # print(get_url_for_token())
+    another_user = VkUser('begemot_korovin')
     print(another_user)
-    friends = another_user & my_profile
-    print(*friends, sep='\n')
+    pprint(another_user.get_photos(1))
 
 
